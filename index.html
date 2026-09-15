@@ -83,12 +83,11 @@
 
       /* ── Filter panel ── */
       .filter-panel {
+        display:none;
         background:var(--br);border:1px solid var(--bd);border-radius:var(--rad);
-        padding:0;margin-bottom:20px;box-shadow:var(--sh);
-        overflow:hidden;transition:max-height .3s ease,opacity .3s ease;
-        max-height:0;opacity:0;pointer-events:none;
+        padding:0;margin-bottom:20px;box-shadow:var(--sh);overflow:hidden;
       }
-      .filter-panel.open { max-height:300px;opacity:1;pointer-events:all; }
+      .filter-panel.open { display:block; }
       .filter-inner { padding:16px 20px; }
       .filter-title {
         font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
@@ -103,6 +102,14 @@
         transition:border-color .2s;
       }
       .filter-input:focus { outline:none;border-color:var(--va);box-shadow:0 0 0 3px rgba(0,132,61,.1); }
+      .filter-shortcut {
+        padding:5px 13px;border:1px solid var(--bd);border-radius:20px;
+        background:var(--fd);color:var(--ts);font-size:12px;font-weight:600;
+        cursor:pointer;transition:all .15s;
+      }
+      .filter-shortcut:hover,.filter-shortcut.ativo {
+        background:var(--vg);color:white;border-color:var(--vg);
+      }
       .filter-actions { display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd); }
       .filter-count {
         font-size:12px;color:var(--ts);flex:1;
@@ -462,10 +469,62 @@
   <div class="pg-hdr">
     <div>
       <h1 class="pg-title">Romaneios de Expedição</h1>
-      <p class="pg-sub">Atualiza automaticamente a cada 5 segundos</p>
+      <p class="pg-sub">Atualiza automaticamente a cada 2 segundos</p>
     </div>
     <div class="pg-upd" id="upd">—</div>
   </div>
+
+  <!-- Barra de estatísticas -->
+  <div class="stats-bar">
+    <div class="stat-box"><div class="stat-val" id="stat-total">—</div><div class="stat-lbl">Romaneios</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-notas">—</div><div class="stat-lbl">Notas Fiscais</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-vols">—</div><div class="stat-lbl">Volumes</div></div>
+    <div class="stat-box"><div class="stat-val" id="stat-dest">—</div><div class="stat-lbl">Destinos</div></div>
+  </div>
+
+  <!-- Painel de filtros (retrátil) -->
+  <div class="filter-panel" id="filter-panel">
+    <div class="filter-inner">
+      <div class="filter-title">⚙ &nbsp;Filtrar Romaneios</div>
+
+      <!-- Atalhos rápidos de data -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="filter-shortcut" onclick="atalhoData('hoje',this)">Hoje</button>
+        <button class="filter-shortcut" onclick="atalhoData('ontem',this)">Ontem</button>
+        <button class="filter-shortcut" onclick="atalhoData('semana',this)">Esta semana</button>
+        <button class="filter-shortcut" onclick="atalhoData('mes',this)">Este mês</button>
+        <button class="filter-shortcut" onclick="atalhoData('todos',this)">Todos</button>
+      </div>
+
+      <div class="filter-grid">
+        <div class="filter-field">
+          <label>📅 Data início (embarque)</label>
+          <input type="date" class="filter-input" id="f-data-ini">
+        </div>
+        <div class="filter-field">
+          <label>📅 Data fim (embarque)</label>
+          <input type="date" class="filter-input" id="f-data-fim">
+        </div>
+        <div class="filter-field">
+          <label>🚛 Motorista</label>
+          <input type="text" class="filter-input" id="f-motorista" placeholder="Ex: Cleyton Barros">
+        </div>
+        <div class="filter-field">
+          <label>📍 Usina / Destino</label>
+          <input type="text" class="filter-input" id="f-usina" placeholder="Ex: Maués">
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <span class="filter-count" id="filter-count"></span>
+        <button class="btn-clear-filter" onclick="limparFiltros()">✕ Limpar tudo</button>
+        <button class="btn-apply-filter" onclick="aplicarFiltros()">✓ Aplicar filtros</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chips dos filtros ativos -->
+  <div class="active-filters" id="active-filters"></div>
 
   <div id="lista"></div>
 </main>
@@ -541,7 +600,39 @@
   // ── Painel de filtros ─────────────────────────────────────────
   function toggleFiltros() {
     const panel = document.getElementById('filter-panel');
+    if (!panel) return;
+    const isOpen = panel.classList.contains('open');
     panel.classList.toggle('open');
+    document.getElementById('btn-filtros').style.background =
+      isOpen ? '' : 'rgba(244,169,0,.25)';
+  }
+
+  function atalhoData(periodo, btn) {
+    document.querySelectorAll('.filter-shortcut').forEach(b => b.classList.remove('ativo'));
+    if (btn) btn.classList.add('ativo');
+
+    const hoje = new Date();
+    const fmt = d => d.toISOString().split('T')[0];
+    const ini = document.getElementById('f-data-ini');
+    const fim = document.getElementById('f-data-fim');
+
+    if (periodo === 'hoje') {
+      ini.value = fim.value = fmt(hoje);
+    } else if (periodo === 'ontem') {
+      const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
+      ini.value = fim.value = fmt(ontem);
+    } else if (periodo === 'semana') {
+      const seg = new Date(hoje);
+      seg.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7));
+      ini.value = fmt(seg);
+      fim.value = fmt(hoje);
+    } else if (periodo === 'mes') {
+      ini.value = fmt(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+      fim.value = fmt(hoje);
+    } else if (periodo === 'todos') {
+      ini.value = ''; fim.value = '';
+    }
+    aplicarFiltros();
   }
 
   function aplicarFiltros() {
