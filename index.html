@@ -106,6 +106,8 @@
       }
       .btn-imp:hover  { background:var(--vp); }
       .btn-imp:active { transform:scale(.97); }
+      .btn-edit { background:#1B5E38 !important; }
+      .btn-edit:hover { background:#0f3d22 !important; }
 
       /* DESTINOS BODY */
       .card-body { padding:14px 20px 16px; }
@@ -300,10 +302,10 @@
 
       // Firebase retorna objeto { pushId: {dados}, … } — converte para array
       const romaneios = json
-        ? Object.values(json)
-            .map(r => ({
+        ? Object.entries(json)
+            .map(([key, r]) => ({
               ...r,
-              // destinos vem como string JSON — parsear
+              _fbKey: key,   // chave Firebase — necessária para editar/salvar
               destinos: typeof r.destinos === 'string'
                 ? (() => { try { return JSON.parse(r.destinos); } catch(_){ return []; } })()
                 : (r.destinos || [])
@@ -385,7 +387,10 @@
             <div class="card-datetime">🕐 Enviado: ${r.dataHoraEnvio}</div>
           </div>
           ${novo ? '<span class="novo-tag">⚡ NOVO</span>' : ''}
-          <button class="btn-imp" onclick='imprimir(${JSON.stringify(r)})'>🖨️ Imprimir</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-imp btn-edit" onclick='abrirEditar(${JSON.stringify(r)})'>✏️ Editar</button>
+            <button class="btn-imp" onclick='imprimir(${JSON.stringify(r)})'>🖨️ Imprimir</button>
+          </div>
         </div>
         <div class="card-body">${destinosHTML}</div>
         <div class="card-footer">${r.totalNotas} nota${r.totalNotas!==1?'s':''} · ${destinos.length} destino${destinos.length!==1?'s':''}</div>
@@ -534,5 +539,122 @@
 
 </script>
 
+<style>
+  /* ── Modal de Edição ── */
+  #modal-editar {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .ed-box {
+    background: #fff;
+    border-radius: 12px;
+    width: min(680px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0,0,0,.3);
+    display: flex;
+    flex-direction: column;
+  }
+  .ed-header {
+    background: #003D1E;
+    color: white;
+    padding: 14px 20px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 2;
+  }
+  .ed-header strong { font-size: 15px; letter-spacing: .3px; }
+  .ed-header button { background:none;border:none;color:white;font-size:20px;cursor:pointer;line-height:1; }
+  .ed-body { padding: 20px; flex: 1; }
+  .ed-field { margin-bottom: 14px; }
+  .ed-field label { display:block;font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.5px;color:#555;margin-bottom:5px; }
+  .ed-field input, .ed-field select {
+    width:100%;padding:9px 11px;border:1px solid #ccc;border-radius:7px;
+    font-size:13px;box-sizing:border-box; }
+  .ed-field input:focus, .ed-field select:focus {
+    outline:none;border-color:#003D1E;box-shadow:0 0 0 3px rgba(0,61,30,.1); }
+  .ed-section-title {
+    font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+    color:#003D1E;margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid #003D1E; }
+  .ed-dest {
+    border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;overflow:hidden; }
+  .ed-dest-hdr {
+    background:#f0f7f1;padding:8px 12px;display:flex;gap:8px;align-items:center; }
+  .ed-dest-num {
+    background:#003D1E;color:white;width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:11px;
+    font-weight:700;flex-shrink:0; }
+  .ed-sel-usina { flex:1;padding:6px 8px;font-size:13px; }
+  .ed-btn-rem-dest {
+    background:none;border:none;font-size:16px;cursor:pointer;padding:2px;
+    color:#dc2626;flex-shrink:0; }
+  .ed-notas { padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;min-height:36px; }
+  .ed-chip {
+    display:inline-flex;align-items:center;gap:4px;background:#E8F3EA;
+    border:1px solid #A7D4B3;border-radius:20px;padding:3px 8px 3px 10px;font-size:12px; }
+  .ed-chip button {
+    background:none;border:none;cursor:pointer;color:#555;font-size:13px;
+    padding:0;line-height:1;display:flex;align-items:center; }
+  .ed-chip button:hover { color:#dc2626; }
+  .ed-add-nota { padding:8px 12px;display:flex;gap:6px;border-top:1px solid #f0f0f0; }
+  .ed-add-nota input {
+    flex:1;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:12px; }
+  .ed-add-nota button {
+    background:#1B6B3A;color:white;border:none;border-radius:6px;
+    padding:7px 14px;cursor:pointer;font-size:12px;white-space:nowrap; }
+  .ed-btn-add-dest {
+    width:100%;padding:9px;border:2px dashed #1B6B3A;background:none;
+    color:#1B6B3A;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;
+    margin-top:4px;transition:background .15s; }
+  .ed-btn-add-dest:hover { background:#f0f7f1; }
+  .ed-footer {
+    padding:14px 20px;border-top:1px solid #e5e7eb;
+    display:flex;align-items:center;gap:12px;
+    position:sticky;bottom:0;background:#fff;border-radius:0 0 12px 12px; }
+  #ed-msg { flex:1;font-size:12px; }
+  #ed-btn-salvar {
+    background:#003D1E;color:white;border:none;border-radius:8px;
+    padding:10px 24px;cursor:pointer;font-size:13px;font-weight:700;
+    white-space:nowrap;transition:background .15s; }
+  #ed-btn-salvar:hover { background:#00592A; }
+  #ed-btn-salvar:disabled { background:#aaa;cursor:not-allowed; }
+</style>
+<!-- ══ MODAL DE EDIÇÃO ══ -->
+<div id="modal-editar">
+  <div class="ed-box">
+    <div class="ed-header">
+      <strong id="ed-numero">Editar Romaneio</strong>
+      <button onclick="fecharEditar()" title="Fechar">✕</button>
+    </div>
+
+    <div class="ed-body">
+      <div class="ed-field">
+        <label>Data do Embarque</label>
+        <input type="date" id="ed-data">
+      </div>
+      <div class="ed-field">
+        <label>Motorista</label>
+        <input type="text" id="ed-motorista" placeholder="Nome do motorista">
+      </div>
+
+      <div class="ed-section-title">Destinos e Notas Fiscais</div>
+      <div id="ed-destinos"></div>
+      <button class="ed-btn-add-dest" onclick="editAddDest()">+ Adicionar outro destino</button>
+    </div>
+
+    <div class="ed-footer">
+      <span id="ed-msg"></span>
+      <button id="ed-btn-salvar" onclick="salvarEdicao()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
