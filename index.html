@@ -274,6 +274,7 @@
 
   let ultimoNum   = null;
   let primeiraVez = true;
+  let romaneiosList = []; // lista global para o botão Editar
 
   // ══════════════════════════════════════════════════════════
   // INIT
@@ -353,10 +354,11 @@
     ultimoNum   = maisRec.numero;
     primeiraVez = false;
 
-    el.innerHTML = lista.map((r, i) => cardHTML(r, i === 0 && isNovo)).join('');
+    romaneiosList = lista;
+    el.innerHTML = lista.map((r, i) => cardHTML(r, i, i === 0 && isNovo)).join('');
   }
 
-  function cardHTML(r, novo) {
+  function cardHTML(r, idx, novo) {
     const destinos = r.destinos || [];
 
     const destinosHTML = destinos.map((d, i) => {
@@ -388,12 +390,14 @@
           </div>
           ${novo ? '<span class="novo-tag">⚡ NOVO</span>' : ''}
           <div style="display:flex;gap:8px;align-items:center">
-            <button class="btn-imp btn-edit" onclick='abrirEditar(${JSON.stringify(r)})'>✏️ Editar</button>
+            <button class="btn-imp btn-edit" onclick="abrirEditar('${idx}')">✏️ Editar</button>
             <button class="btn-imp" onclick='imprimir(${JSON.stringify(r)})'>🖨️ Imprimir</button>
           </div>
         </div>
         <div class="card-body">${destinosHTML}</div>
-        <div class="card-footer">${r.totalNotas} nota${r.totalNotas!==1?'s':''} · ${destinos.length} destino${destinos.length!==1?'s':''}</div>
+        <div class="card-footer">${r.totalNotas} nota${r.totalNotas!==1?'s':''} · ${
+          (r.destinos||[]).reduce((s,d)=>s+(d.notas||[]).reduce((sv,n)=>sv+(n.volumes||1),0),0)
+        } vol · ${destinos.length} destino${destinos.length!==1?'s':''}</div>
       </div>`;
   }
 
@@ -404,19 +408,25 @@
     const vias = [
       { lbl:'1ª VIA', dest:'PORTARIA'  },
       { lbl:'2ª VIA', dest:'EXPEDIÇÃO' },
-      { lbl:'3ª VIA', dest:'MOTORISTA' }
+      { lbl:'3ª VIA', dest:'MOTORISTA' },
+      { lbl:'4ª VIA', dest:'USINA'     }
     ];
 
     const htmlVia = (via) => {
       // Construir seções de destino
       let nGlobal = 0;
+      let totalVolumesGeral = 0;
       const secoes = (r.destinos || []).map((d, di) => {
+        let volDest = 0;
         const linhas = (d.notas || []).map(n => {
           nGlobal++;
+          const vol = n.volumes || 1;
+          volDest         += vol;
+          totalVolumesGeral += vol;
           return `<tr>
             <td style="text-align:center;width:24px">${nGlobal}</td>
             <td style="width:140px">${n.display}</td>
-            <td><span class="ch">${formatarChave(n.chave)}</span></td>
+            <td style="text-align:center;font-weight:bold">${vol}</td>
           </tr>`;
         }).join('');
 
@@ -424,19 +434,19 @@
           <div class="dest-secao">
             <div class="dest-titulo">
               <span>DESTINO ${di + 1}: ${d.usina}</span>
-              <em>${(d.notas||[]).length} nota${(d.notas||[]).length!==1?'s':''}</em>
+              <em>${(d.notas||[]).length} nota${(d.notas||[]).length!==1?'s':''} · ${volDest} vol</em>
             </div>
             <table class="notas">
               <thead>
                 <tr>
                   <th style="width:24px">#</th>
                   <th style="width:140px">Nota Fiscal</th>
-                  <th>Chave de Acesso (44 dígitos)</th>
+                  <th style="text-align:center;width:100px">Qtd. Volumes</th>
                 </tr>
               </thead>
               <tbody>${linhas}</tbody>
             </table>
-            <div class="secao-footer">Subtotal ${d.usina}: ${(d.notas||[]).length} nota(s)</div>
+            <div class="secao-footer">Subtotal ${d.usina}: ${(d.notas||[]).length} nota(s) · ${volDest} volume(s)</div>
           </div>`;
       }).join('');
 
@@ -480,7 +490,7 @@
           ${secoes}
 
           <div class="total-bloco">
-            TOTAL GERAL: ${r.totalNotas} nota${r.totalNotas!==1?'s':''} fiscal${r.totalNotas!==1?'is':''} · ${(r.destinos||[]).length} destino${(r.destinos||[]).length!==1?'s':''}
+            TOTAL GERAL: ${r.totalNotas} nota${r.totalNotas!==1?'s':''} · ${totalVolumesGeral} volume${totalVolumesGeral!==1?'s':''} · ${(r.destinos||[]).length} destino${(r.destinos||[]).length!==1?'s':''}
           </div>
 
           <hr class="ls">
@@ -535,6 +545,210 @@
       gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .35);
       osc.start(ctx.currentTime); osc.stop(ctx.currentTime + .35);
     } catch (_) {}
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // EDIÇÃO E EXCLUSÃO DE ROMANEIO
+  // ══════════════════════════════════════════════════════════
+  const USINAS_ED = ["ARARAS","AUGUSTO MONTENEGRO","BARCELOS","BARREIRINHA","BELO MONTE",
+    "BERURI","BOA VISTA DO RAMOS","BOCA DO ACRE","CABURI","CAMPINAS","CANUTAMA",
+    "CAREIRO DA VARZEA","CASTANHO I (CAREIRO KM 27)","CASTANHO II (KM 100)","CAVIANA",
+    "CUCUÍ","IAUARETÊ","ITAPURU","LÁBREA","MANAQUIRI","MAUÉS","MOCAMBO","MOURA",
+    "NHAMUNDÁ","NOVO AIRÃO","NOVO CÉU","NOVO REMANSO","PARAUÁ","PAUINI","PEDRAS",
+    "SACAMBU","SANTA ISABEL DO RIO NEGRO","SANTANA DO UATUMÃ","SÃO SEBASTIÃO DO UATUMÃ",
+    "TAPAUÁ","TUIUÉ","URUCARÁ","URUCURITUBA","VILA AMAZÔNIA","VILA DE CARVOEIRO",
+    "VILA LINDÓIA","VILA URUCURITUBA"];
+
+  let editState = null;
+
+  // ── Abrir modal ─────────────────────────────────────────────
+  function abrirEditar(idx) {
+    const r = romaneiosList[parseInt(idx, 10)];
+    if (!r) { alert('Romaneio não encontrado. Aguarde a próxima atualização e tente novamente.'); return; }
+    editState = JSON.parse(JSON.stringify(r)); // deep copy
+    renderModalEditar();
+    document.getElementById('modal-editar').style.display = 'flex';
+  }
+
+  function fecharEditar() {
+    document.getElementById('modal-editar').style.display = 'none';
+    editState = null;
+  }
+
+  // ── Renderizar campos do modal ───────────────────────────────
+  function renderModalEditar() {
+    if (!editState) return;
+    const r = editState;
+
+    document.getElementById('ed-numero').textContent = 'Romaneio Nº ' + r.numero;
+    document.getElementById('ed-data').value =
+      r.dataEmbarque ? r.dataEmbarque.split('/').reverse().join('-') : '';
+    document.getElementById('ed-motorista').value = r.motorista || '';
+    document.getElementById('ed-msg').textContent  = '';
+    document.getElementById('ed-msg').style.color  = '#555';
+
+    const destinosHTML = (r.destinos || []).map((d, di) => {
+      const notasHTML = (d.notas || []).map((n, ni) => `
+        <span class="ed-chip">
+          ${n.display}${n.volumes && n.volumes > 1 ? ' <b>×'+n.volumes+'</b>' : ''}
+          <button onclick="editRemNota(${di},${ni})" title="Remover">✕</button>
+        </span>`).join('');
+      return `
+        <div class="ed-dest">
+          <div class="ed-dest-hdr">
+            <span class="ed-dest-num">${di + 1}</span>
+            <select class="ed-sel-usina" onchange="editSetUsina(${di},this.value)">
+              <option value="">— Selecionar usina —</option>
+              ${USINAS_ED.map(u => '<option value="'+u+'"'+(u===d.usina?' selected':'')+'>'+u+'</option>').join('')}
+            </select>
+            <button class="ed-btn-rem-dest" onclick="editRemDest(${di})" title="Remover destino">🗑️</button>
+          </div>
+          <div class="ed-notas">${notasHTML || '<span style="color:#aaa;font-size:12px;padding:4px">Nenhuma nota</span>'}</div>
+          <div class="ed-add-nota">
+            <input type="text" id="ed-inp-${di}" placeholder="Número da NF ou chave 44 dígitos"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();editAddNota(${di})}">
+            <button onclick="editAddNota(${di})">+ Nota</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('ed-destinos').innerHTML = destinosHTML;
+  }
+
+  // ── Operações nos destinos ───────────────────────────────────
+  function editSetUsina(di, val) {
+    if (editState) editState.destinos[di].usina = val;
+  }
+
+  function editRemDest(di) {
+    if (!editState) return;
+    if (editState.destinos.length <= 1) {
+      setEdMsg('É necessário ter ao menos um destino.', 'erro'); return;
+    }
+    editState.destinos.splice(di, 1);
+    renderModalEditar();
+  }
+
+  function editAddDest() {
+    if (!editState) return;
+    editState.destinos.push({ usina: '', notas: [] });
+    renderModalEditar();
+    setTimeout(() => {
+      const dests = document.querySelectorAll('.ed-dest');
+      dests[dests.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+
+  function editAddNota(di) {
+    if (!editState) return;
+    const inp   = document.getElementById('ed-inp-' + di);
+    const valor = inp.value.trim();
+    if (!valor) return;
+
+    const s = valor.replace(/\D/g, '');
+    let nf;
+    if (s.length === 44) {
+      const num = parseInt(s.substring(25, 34), 10);
+      nf = { chave: s, display: 'NF ' + num.toLocaleString('pt-BR'), volumes: 1 };
+    } else if (s.length >= 1 && s.length <= 9) {
+      nf = { chave: s, display: 'NF ' + parseInt(s, 10).toLocaleString('pt-BR'), volumes: 1 };
+    } else {
+      setEdMsg('NF inválida. Use o número curto ou a chave de 44 dígitos.', 'erro'); return;
+    }
+
+    const jaExiste = editState.destinos.some(d => d.notas.some(n => n.chave === nf.chave));
+    if (jaExiste) { setEdMsg('Essa nota já está em outro destino.', 'erro'); return; }
+
+    editState.destinos[di].notas.push(nf);
+    inp.value = '';
+    setEdMsg('', '');
+    renderModalEditar();
+  }
+
+  function editRemNota(di, ni) {
+    if (!editState) return;
+    editState.destinos[di].notas.splice(ni, 1);
+    renderModalEditar();
+  }
+
+  // ── Salvar ───────────────────────────────────────────────────
+  async function salvarEdicao() {
+    if (!editState) return;
+    const msg = document.getElementById('ed-msg');
+
+    const dataRaw   = document.getElementById('ed-data').value;
+    const motorista = document.getElementById('ed-motorista').value.trim();
+
+    if (!dataRaw)   { setEdMsg('Informe a data do embarque.', 'erro'); return; }
+    if (!motorista) { setEdMsg('Informe o motorista.', 'erro'); return; }
+
+    const destinosValidos = editState.destinos.filter(d => d.usina);
+    if (!destinosValidos.length) { setEdMsg('Informe ao menos um destino com usina.', 'erro'); return; }
+
+    const [a, m, d] = dataRaw.split('-');
+    const dataFmt   = d + '/' + m + '/' + a;
+    const totalNotas = destinosValidos.reduce((s, d) => s + d.notas.length, 0);
+
+    const payload = {
+      numero:        editState.numero,
+      dataHoraEnvio: editState.dataHoraEnvio,
+      dataEmbarque:  dataFmt,
+      motorista,
+      destinos:      JSON.stringify(destinosValidos),
+      totalNotas
+    };
+
+    const btn = document.getElementById('ed-btn-salvar');
+    btn.disabled = true; btn.textContent = 'Salvando…';
+
+    try {
+      const resp = await fetch(DB_URL + '/romaneios/' + editState._fbKey + '.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) throw new Error('Firebase ' + resp.status);
+      setEdMsg('✓ Alterações salvas!', 'ok');
+      setTimeout(fecharEditar, 1000);
+    } catch (e) {
+      setEdMsg('Erro ao salvar: ' + e.message, 'erro');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Salvar alterações';
+    }
+  }
+
+  // ── Excluir romaneio inteiro ─────────────────────────────────
+  async function excluirRomaneio() {
+    if (!editState) return;
+
+    const confirmado = confirm(
+      'Tem certeza que deseja EXCLUIR o Romaneio Nº ' + editState.numero + '?\n\n' +
+      'Esta ação não pode ser desfeita.'
+    );
+    if (!confirmado) return;
+
+    const btn = document.getElementById('ed-btn-excluir');
+    btn.disabled = true; btn.textContent = 'Excluindo…';
+
+    try {
+      const resp = await fetch(DB_URL + '/romaneios/' + editState._fbKey + '.json', {
+        method: 'DELETE'
+      });
+      if (!resp.ok) throw new Error('Firebase ' + resp.status);
+      fecharEditar();
+      mostrarToast('🗑️ Romaneio Nº ' + editState?.numero + ' excluído.');
+    } catch (e) {
+      setEdMsg('Erro ao excluir: ' + e.message, 'erro');
+      btn.disabled = false; btn.textContent = '🗑️ Excluir romaneio';
+    }
+  }
+
+  // ── Helper mensagem ──────────────────────────────────────────
+  function setEdMsg(texto, tipo) {
+    const el = document.getElementById('ed-msg');
+    if (!el) return;
+    el.textContent = texto;
+    el.style.color = tipo === 'erro' ? '#dc2626' : tipo === 'ok' ? '#1B6B3A' : '#555';
   }
 
 </script>
@@ -626,6 +840,7 @@
     white-space:nowrap;transition:background .15s; }
   #ed-btn-salvar:hover { background:#00592A; }
   #ed-btn-salvar:disabled { background:#aaa;cursor:not-allowed; }
+  #ed-btn-excluir:disabled { background:#aaa !important;cursor:not-allowed; }
 </style>
 <!-- ══ MODAL DE EDIÇÃO ══ -->
 <div id="modal-editar">
@@ -651,6 +866,14 @@
     </div>
 
     <div class="ed-footer">
+      <button id="ed-btn-excluir" onclick="excluirRomaneio()"
+              style="background:#dc2626;color:white;border:none;border-radius:8px;
+                     padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;
+                     white-space:nowrap;transition:background .15s;margin-right:auto"
+              onmouseover="this.style.background='#b91c1c'"
+              onmouseout="this.style.background='#dc2626'">
+        🗑️ Excluir romaneio
+      </button>
       <span id="ed-msg"></span>
       <button id="ed-btn-salvar" onclick="salvarEdicao()">Salvar alterações</button>
     </div>
