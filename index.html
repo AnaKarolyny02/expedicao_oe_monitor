@@ -750,7 +750,14 @@
     const destinosHTML = (r.destinos || []).map((d, di) => {
       const notasHTML = (d.notas || []).map((n, ni) => `
         <span class="ed-chip">
-          ${n.display}${n.volumes && n.volumes > 1 ? ' <b>×'+n.volumes+'</b>' : ''}
+          ${n.display}
+          <span style="margin:0 3px;color:#bbb;font-size:10px">|</span>
+          <span style="font-size:10px;color:#666">📦</span>
+          <input type="number" min="1" value="${n.volumes || 1}"
+            class="ed-vol-inp"
+            onchange="editSetVolumes(${di},${ni},this.value)"
+            onclick="event.stopPropagation()"
+            title="Qtd. volumes">
           <button onclick="editRemNota(${di},${ni})" title="Remover">✕</button>
         </span>`).join('');
       return `
@@ -767,6 +774,8 @@
           <div class="ed-add-nota">
             <input type="text" id="ed-inp-${di}" placeholder="Número da NF ou chave 44 dígitos"
                    onkeydown="if(event.key==='Enter'){event.preventDefault();editAddNota(${di})}">
+            <input type="number" min="1" value="1" id="ed-vol-${di}"
+                   class="ed-vol-add" title="Qtd. volumes" placeholder="Vol">
             <button onclick="editAddNota(${di})">+ Nota</button>
           </div>
         </div>`;
@@ -819,8 +828,11 @@
     const jaExiste = editState.destinos.some(d => d.notas.some(n => n.chave === nf.chave));
     if (jaExiste) { setEdMsg('Essa nota já está em outro destino.', 'erro'); return; }
 
+    const volInp = document.getElementById('ed-vol-' + di);
+    nf.volumes = Math.max(1, parseInt(volInp ? volInp.value : 1, 10) || 1);
     editState.destinos[di].notas.push(nf);
     inp.value = '';
+    if (volInp) volInp.value = '1';
     setEdMsg('', '');
     renderModalEditar();
   }
@@ -829,6 +841,11 @@
     if (!editState) return;
     editState.destinos[di].notas.splice(ni, 1);
     renderModalEditar();
+  }
+
+  function editSetVolumes(di, ni, val) {
+    if (!editState) return;
+    editState.destinos[di].notas[ni].volumes = Math.max(1, parseInt(val, 10) || 1);
   }
 
   // ── Salvar ───────────────────────────────────────────────────
@@ -978,6 +995,20 @@
     background:none;border:none;cursor:pointer;color:#555;font-size:13px;
     padding:0;line-height:1;display:flex;align-items:center; }
   .ed-chip button:hover { color:#dc2626; }
+  .ed-vol-inp {
+    width:42px;padding:2px 4px;font-size:12px;font-weight:700;
+    border:1px solid #b6d4be;border-radius:4px;text-align:center;
+    color:#003D1E;background:#f0f7f2;-moz-appearance:textfield; }
+  .ed-vol-inp::-webkit-inner-spin-button,
+  .ed-vol-inp::-webkit-outer-spin-button { -webkit-appearance:none; }
+  .ed-vol-inp:focus { outline:none;border-color:#003D1E; }
+  .ed-vol-add {
+    width:56px;padding:7px 6px;font-size:13px;font-weight:700;
+    border:1px solid #ccc;border-radius:6px;text-align:center;
+    color:#003D1E;-moz-appearance:textfield;flex-shrink:0; }
+  .ed-vol-add::-webkit-inner-spin-button,
+  .ed-vol-add::-webkit-outer-spin-button { -webkit-appearance:none; }
+  .ed-vol-add:focus { outline:none;border-color:#003D1E; }
   .ed-add-nota { padding:8px 12px;display:flex;gap:6px;border-top:1px solid #f0f0f0; }
   .ed-add-nota input {
     flex:1;padding:7px 10px;border:1px solid #ccc;border-radius:6px;font-size:12px; }
