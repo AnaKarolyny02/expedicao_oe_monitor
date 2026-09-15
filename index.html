@@ -214,6 +214,44 @@
       .total-bloco { background:#003D1E; color:white; padding:5px 10px; border-radius:3px; text-align:center; font-size:10pt; font-weight:bold; margin:6px 0; }
 
       /* assinaturas */
+      /* ── Via Expedição — discriminação de volumes ── */
+      .discrim-box {
+        border: 1.5px solid #333;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .discrim-titulo {
+        background: #f0f0f0;
+        border-bottom: 1px solid #333;
+        text-align: center;
+        font-weight: bold;
+        font-size: 8.5pt;
+        padding: 4px 8px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .discrim-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        padding: 5px 10px;
+        border-bottom: 1px solid #ddd;
+      }
+      .discrim-row:last-child { border-bottom: none; }
+      .discrim-usina {
+        font-weight: bold;
+        font-size: 8.5pt;
+        white-space: nowrap;
+        min-width: 110px;
+        flex-shrink: 0;
+      }
+      .discrim-linha {
+        flex: 1;
+        border-bottom: 1px solid #555;
+        margin-bottom: 2px;
+      }
+
       /* ── Via Logística — bloco de transporte ── */
       .transp-box {
         border: 2px solid #222;
@@ -248,6 +286,11 @@
         padding: 3px 10px;
         background: #fafafa;
         letter-spacing: 1px;
+      }
+      .transp-campo-linha {
+        height: 22px;
+        border-bottom: 1px solid #222;
+        margin: 4px 10px;
       }
       .transp-ass-label {
         text-align: center;
@@ -469,9 +512,9 @@
   // ══════════════════════════════════════════════════════════
   // IMPRESSÃO — 3 VIAS
   // ══════════════════════════════════════════════════════════
-  // ── HTML de rodapé por via ──────────────────────────────────
+  // ── HTML de rodapé por via (funções que recebem o romaneio) ──
   const assinaturasVia = {
-    PORTARIA: `
+    PORTARIA: (r) => `
       <div class="assinaturas">
         <div class="ass">
           <p>Responsável pela Portaria:</p>
@@ -480,21 +523,32 @@
         </div>
       </div>`,
 
-    EXPEDIÇÃO: `
-      <div class="assinaturas">
-        <div class="ass">
-          <p>Responsável pela Expedição:</p>
-          <div class="ass-linha"></div>
-          <small>Nome completo / Assinatura / Data</small>
+    EXPEDIÇÃO: (r) => {
+      const linhasDiscrim = (r.destinos || []).map(d => `
+        <div class="discrim-row">
+          <span class="discrim-usina">${d.usina}:</span>
+          <div class="discrim-linha"></div>
+        </div>`).join('');
+      return `
+        <div class="discrim-box">
+          <div class="discrim-titulo">DISCRIMINAÇÃO DOS VOLUMES POR LOCALIDADE</div>
+          ${linhasDiscrim}
         </div>
-        <div class="ass">
-          <p>Motorista — Ciente e Recebido:</p>
-          <div class="ass-linha"></div>
-          <small>Nome completo / Assinatura / Data</small>
-        </div>
-      </div>`,
+        <div class="assinaturas" style="margin-top:10px">
+          <div class="ass">
+            <p>Responsável pela Expedição:</p>
+            <div class="ass-linha"></div>
+            <small>Nome completo / Assinatura / Data</small>
+          </div>
+          <div class="ass">
+            <p>Motorista — Ciente e Recebido:</p>
+            <div class="ass-linha"></div>
+            <small>Nome completo / Assinatura / Data</small>
+          </div>
+        </div>`;
+    },
 
-    LOGÍSTICA: `
+    LOGÍSTICA: (r) => `
       <div class="transp-box">
         <div class="transp-titulo">RESPONSÁVEL PELO TRANSPORTE<br>RECEBIDO</div>
         <div class="transp-row">
@@ -502,6 +556,7 @@
           <span>HORA: _______________</span>
         </div>
         <div class="transp-sep">TRANSPORTE</div>
+        <div class="transp-campo-linha"></div>
         <div class="transp-ass-label">ASSINATURA</div>
         <div class="transp-ass-space"></div>
         <hr style="border:none;border-top:1px solid #333;margin:4px 0">
@@ -522,7 +577,7 @@
         </div>
       </div>`,
 
-    USINA: `
+    USINA: (r) => `
       <div class="assinaturas">
         <div class="ass">
           <p>Responsável pelo Recebimento (Usina):</p>
@@ -577,7 +632,7 @@
           </div>`;
       }).join('');
 
-      const rodapeAssin = assinaturasVia[via.dest] || '';
+      const rodapeAssin = assinaturasVia[via.dest] ? assinaturasVia[via.dest](r) : '';
 
       return `
         <div class="via">
