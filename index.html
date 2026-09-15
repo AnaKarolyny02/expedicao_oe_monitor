@@ -17,6 +17,24 @@
       --rad:10px; --sh:0 2px 8px rgba(0,61,30,.08);
     }
 
+    /* ── Modo escuro ── */
+    [data-theme="dark"] {
+      --fd:#0D1F12; --br:#162A1B; --tx:#DFF0E4; --ts:#7AAE8A;
+      --bd:#2A4534; --vc:#1A3322; --amc:#2A2000; --sh:0 2px 8px rgba(0,0,0,.35);
+    }
+    [data-theme="dark"] body        { background:var(--fd); color:var(--tx); }
+    [data-theme="dark"] .rom-card   { background:var(--br); border-color:var(--bd); }
+    [data-theme="dark"] .card-top   { background:var(--br); }
+    [data-theme="dark"] .card-body  { background:var(--vc); }
+    [data-theme="dark"] .dest-row   { color:var(--ts); }
+    [data-theme="dark"] .nota-chip  { background:#1A3322; border-color:#2A4534; }
+    [data-theme="dark"] .pg-title   { color:#5ABF7B; }
+    [data-theme="dark"] .filter-panel { background:var(--br); border-color:var(--bd); }
+    [data-theme="dark"] .filter-input { background:#0D1F12; border-color:var(--bd); color:var(--tx); }
+    [data-theme="dark"] .filter-input:focus { border-color:var(--va); }
+    [data-theme="dark"] .stat-box   { background:var(--br); border-color:var(--bd); }
+    [data-theme="dark"] .pg-upd     { color:var(--ts); }
+
     /* ══ TELA ══ */
     @media screen {
       body { font-family:var(--fnt-b); background:var(--fd); color:var(--tx); min-height:100vh; }
@@ -38,6 +56,83 @@
       @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.6)} 50%{box-shadow:0 0 0 5px rgba(74,222,128,0)} }
       .h-right { margin-left:auto; }
       .h-clock { font-family:var(--fnt-m); font-size:12px; color:rgba(255,255,255,.6); }
+
+      /* ── Header buttons ── */
+      .h-btn {
+        background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.2);
+        border-radius:7px;padding:6px 13px;cursor:pointer;font-size:12px;font-weight:600;
+        display:flex;align-items:center;gap:5px;transition:background .15s;white-space:nowrap;
+      }
+      .h-btn:hover { background:rgba(255,255,255,.22); }
+      .h-btn .badge {
+        background:var(--am);color:#000;border-radius:10px;
+        font-size:10px;padding:1px 6px;font-weight:700;
+      }
+
+      /* ── Stats bar ── */
+      .stats-bar {
+        display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;
+      }
+      .stat-box {
+        background:var(--br);border:1px solid var(--bd);border-radius:var(--rad);
+        padding:12px 18px;flex:1;min-width:120px;box-shadow:var(--sh);
+        display:flex;flex-direction:column;gap:2px;
+      }
+      .stat-val { font-family:var(--fnt-d);font-size:26px;font-weight:700;color:var(--vg); }
+      .stat-lbl { font-size:11px;color:var(--ts);text-transform:uppercase;letter-spacing:.5px; }
+
+      /* ── Filter panel ── */
+      .filter-panel {
+        background:var(--br);border:1px solid var(--bd);border-radius:var(--rad);
+        padding:0;margin-bottom:20px;box-shadow:var(--sh);
+        overflow:hidden;transition:max-height .3s ease,opacity .3s ease;
+        max-height:0;opacity:0;pointer-events:none;
+      }
+      .filter-panel.open { max-height:300px;opacity:1;pointer-events:all; }
+      .filter-inner { padding:16px 20px; }
+      .filter-title {
+        font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+        color:var(--ts);margin-bottom:12px;display:flex;align-items:center;gap:8px;
+      }
+      .filter-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px; }
+      .filter-field { display:flex;flex-direction:column;gap:5px; }
+      .filter-field label { font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.4px; }
+      .filter-input {
+        padding:8px 10px;border:1px solid var(--bd);border-radius:7px;
+        font-size:13px;font-family:var(--fnt-b);background:var(--fd);color:var(--tx);
+        transition:border-color .2s;
+      }
+      .filter-input:focus { outline:none;border-color:var(--va);box-shadow:0 0 0 3px rgba(0,132,61,.1); }
+      .filter-actions { display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd); }
+      .filter-count {
+        font-size:12px;color:var(--ts);flex:1;
+      }
+      .btn-clear-filter {
+        background:none;border:1px solid var(--bd);border-radius:7px;
+        padding:7px 14px;font-size:12px;cursor:pointer;color:var(--ts);
+        transition:all .15s;
+      }
+      .btn-clear-filter:hover { border-color:var(--vg);color:var(--vg); }
+      .btn-apply-filter {
+        background:var(--vg);color:white;border:none;border-radius:7px;
+        padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;
+        transition:background .15s;
+      }
+      .btn-apply-filter:hover { background:var(--vp); }
+
+      /* ── Active filter chips ── */
+      .active-filters { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center; }
+      .active-filters:empty { display:none; }
+      .filter-chip {
+        display:inline-flex;align-items:center;gap:5px;background:var(--vc);
+        border:1px solid var(--va);border-radius:20px;padding:3px 10px;font-size:11px;
+        font-weight:600;color:var(--vg);
+      }
+      .filter-chip button {
+        background:none;border:none;cursor:pointer;color:var(--ts);font-size:13px;
+        padding:0;line-height:1;display:flex;
+      }
+      .filter-chip button:hover { color:#dc2626; }
 
       /* TOAST */
       .toast {
@@ -351,7 +446,13 @@
       <div class="pulse-dot" id="pulse-dot"></div>
       <span id="status-txt">Conectando…</span>
     </div>
-    <div class="h-right">
+    <div class="h-right" style="display:flex;align-items:center;gap:10px">
+      <button class="h-btn" onclick="toggleFiltros()" id="btn-filtros" title="Filtros">
+        <span>⚙ Filtros</span>
+        <span class="badge" id="filtros-badge" style="display:none">0</span>
+      </button>
+      <button class="h-btn" onclick="toggleDarkMode()" id="btn-tema" title="Alternar tema">🌙</button>
+      <button class="h-btn" onclick="toggleFullscreen()" id="btn-fs" title="Tela cheia">⛶</button>
       <div class="h-clock" id="clock"></div>
     </div>
   </div>
@@ -387,12 +488,154 @@
   // ══════════════════════════════════════════════════════════
   // INIT
   // ══════════════════════════════════════════════════════════
+  // ── Estado dos filtros ──────────────────────────────────────
+  let filtros = { dataIni:'', dataFim:'', motorista:'', usina:'' };
+  let listaCompleta = []; // todos os romaneios sem filtro
+
   document.addEventListener('DOMContentLoaded', () => {
     atualizarClock();
     setInterval(atualizarClock, 1000);
     buscar();
     setInterval(buscar, 2000);
+
+    // Restaurar tema salvo
+    const tema = localStorage.getItem('oe-tema') || 'light';
+    document.documentElement.setAttribute('data-theme', tema);
+    document.getElementById('btn-tema').textContent = tema === 'dark' ? '☀' : '🌙';
+
+    // Aplicar filtros ao pressionar Enter nos campos
+    ['f-data-ini','f-data-fim','f-motorista','f-usina'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') aplicarFiltros();
+      });
+    });
   });
+
+  // ── Tema escuro / claro ──────────────────────────────────────
+  function toggleDarkMode() {
+    const atual = document.documentElement.getAttribute('data-theme');
+    const novo  = atual === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', novo);
+    localStorage.setItem('oe-tema', novo);
+    document.getElementById('btn-tema').textContent = novo === 'dark' ? '☀' : '🌙';
+  }
+
+  // ── Tela cheia ───────────────────────────────────────────────
+  function toggleFullscreen() {
+    const btn = document.getElementById('btn-fs');
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      btn.textContent = '⛶';
+      btn.title = 'Sair da tela cheia';
+    } else {
+      document.exitFullscreen();
+      btn.textContent = '⛶';
+      btn.title = 'Tela cheia';
+    }
+  }
+  document.addEventListener('fullscreenchange', () => {
+    const btn = document.getElementById('btn-fs');
+    if (btn) btn.textContent = document.fullscreenElement ? '✕ Sair' : '⛶';
+  });
+
+  // ── Painel de filtros ─────────────────────────────────────────
+  function toggleFiltros() {
+    const panel = document.getElementById('filter-panel');
+    panel.classList.toggle('open');
+  }
+
+  function aplicarFiltros() {
+    filtros.dataIni   = document.getElementById('f-data-ini')?.value || '';
+    filtros.dataFim   = document.getElementById('f-data-fim')?.value || '';
+    filtros.motorista = (document.getElementById('f-motorista')?.value || '').trim().toLowerCase();
+    filtros.usina     = (document.getElementById('f-usina')?.value || '').trim().toLowerCase();
+
+    renderListaFiltrada();
+    atualizarChipsFiltro();
+    atualizarBadgeFiltro();
+
+    // Fechar painel após aplicar
+    document.getElementById('filter-panel').classList.remove('open');
+  }
+
+  function limparFiltros() {
+    filtros = { dataIni:'', dataFim:'', motorista:'', usina:'' };
+    ['f-data-ini','f-data-fim','f-motorista','f-usina'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    renderListaFiltrada();
+    atualizarChipsFiltro();
+    atualizarBadgeFiltro();
+  }
+
+  function removerFiltro(campo) {
+    filtros[campo] = '';
+    const el = { dataIni:'f-data-ini', dataFim:'f-data-fim', motorista:'f-motorista', usina:'f-usina' }[campo];
+    if (el) { const inp = document.getElementById(el); if (inp) inp.value = ''; }
+    renderListaFiltrada();
+    atualizarChipsFiltro();
+    atualizarBadgeFiltro();
+  }
+
+  function filtrarLista(lista) {
+    return lista.filter(r => {
+      if (filtros.motorista && !(r.motorista||'').toLowerCase().includes(filtros.motorista)) return false;
+      if (filtros.usina && !(r.destinos||[]).some(d => (d.usina||'').toLowerCase().includes(filtros.usina))) return false;
+      if (filtros.dataIni || filtros.dataFim) {
+        // dataEmbarque formato dd/mm/yyyy
+        const partes = (r.dataEmbarque||'').split('/');
+        if (partes.length === 3) {
+          const dataISO = partes[2] + '-' + partes[1] + '-' + partes[0];
+          if (filtros.dataIni && dataISO < filtros.dataIni) return false;
+          if (filtros.dataFim && dataISO > filtros.dataFim) return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  function renderListaFiltrada() {
+    const filtrada = filtrarLista(listaCompleta);
+    const count = document.getElementById('filter-count');
+    if (count) count.textContent = filtrada.length + ' de ' + listaCompleta.length + ' romaneios';
+    renderLista(filtrada, true);
+  }
+
+  function atualizarChipsFiltro() {
+    const container = document.getElementById('active-filters');
+    if (!container) return;
+    const chips = [];
+    const fmt = { dataIni:'A partir de', dataFim:'Até', motorista:'Motorista', usina:'Usina' };
+    const fmtVal = { dataIni: v => v.split('-').reverse().join('/'), dataFim: v => v.split('-').reverse().join('/'), motorista: v => v, usina: v => v };
+    for (const [k, v] of Object.entries(filtros)) {
+      if (!v) continue;
+      chips.push(`<span class="filter-chip">${fmt[k]}: ${fmtVal[k](v)}<button onclick="removerFiltro('${k}')" title="Remover">✕</button></span>`);
+    }
+    container.innerHTML = chips.join('');
+  }
+
+  function atualizarBadgeFiltro() {
+    const badge = document.getElementById('filtros-badge');
+    if (!badge) return;
+    const count = Object.values(filtros).filter(Boolean).length;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline' : 'none';
+  }
+
+  // ── Atualizar stats bar ───────────────────────────────────────
+  function atualizarStats(lista) {
+    const totalNotas = lista.reduce((s, r) => s + (r.totalNotas || 0), 0);
+    const totalVols  = lista.reduce((s, r) =>
+      s + (r.destinos||[]).reduce((sv, d) =>
+        sv + (d.notas||[]).reduce((svv, n) => svv + (n.volumes||1), 0), 0), 0);
+    const totalDest  = lista.reduce((s, r) => s + (r.destinos||[]).length, 0);
+    const el = id => document.getElementById(id);
+    if (el('stat-total')) el('stat-total').textContent = lista.length;
+    if (el('stat-notas')) el('stat-notas').textContent = totalNotas;
+    if (el('stat-vols'))  el('stat-vols').textContent  = totalVols;
+    if (el('stat-dest'))  el('stat-dest').textContent  = totalDest;
+  }
 
   function atualizarClock() {
     document.getElementById('clock').textContent = new Date()
@@ -422,7 +665,9 @@
             .sort((a, b) => Number(b.numero) - Number(a.numero))
         : [];
 
-      renderLista(romaneios);
+      listaCompleta = romaneios;
+      const filtrada = filtrarLista(romaneios);
+      renderLista(filtrada, Object.values(filtros).some(Boolean));
     } catch (_) {
       setStatus(false);
     }
