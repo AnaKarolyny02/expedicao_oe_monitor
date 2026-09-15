@@ -545,10 +545,6 @@
           <div class="discrim-linha"></div>
         </div>`).join('');
       return `
-        <div class="discrim-box">
-          <div class="discrim-titulo">DISCRIMINAÇÃO DOS VOLUMES POR LOCALIDADE</div>
-          ${linhasDiscrim}
-        </div>
         <div class="transp-box">
         <div class="transp-titulo">RESPONSÁVEL PELO TRANSPORTE<br>RECEBIDO</div>
         <div class="transp-row">
@@ -575,7 +571,11 @@
           <span>( &nbsp;) BARCO &nbsp;&nbsp; ( &nbsp;) AÉREO &nbsp;&nbsp; ( &nbsp;) BALSA</span>
           <span>( &nbsp;) TÁXI &nbsp;&nbsp;&nbsp;&nbsp; ( &nbsp;) LANCHA &nbsp; ( &nbsp;) ÔNIBUS</span>
         </div>
-      </div>`;
+      </div>
+        <div class="discrim-box" style="margin-top:8px">
+          <div class="discrim-titulo">DISCRIMINAÇÃO DOS VOLUMES POR LOCALIDADE</div>
+          ${linhasDiscrim}
+        </div>`;
     },
 
     USINA: (r) => `
