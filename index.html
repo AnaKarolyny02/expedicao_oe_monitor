@@ -214,6 +214,71 @@
       .total-bloco { background:#003D1E; color:white; padding:5px 10px; border-radius:3px; text-align:center; font-size:10pt; font-weight:bold; margin:6px 0; }
 
       /* assinaturas */
+      /* ── Via Logística — bloco de transporte ── */
+      .transp-box {
+        border: 2px solid #222;
+        border-radius: 4px;
+        padding: 0;
+        font-size: 9pt;
+        margin-top: 4px;
+        overflow: hidden;
+      }
+      .transp-titulo {
+        background: #f0f0f0;
+        border-bottom: 1px solid #222;
+        text-align: center;
+        font-weight: bold;
+        font-size: 9.5pt;
+        padding: 5px 8px;
+        line-height: 1.3;
+      }
+      .transp-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 10px;
+        border-bottom: 1px solid #bbb;
+        font-size: 9pt;
+        gap: 20px;
+      }
+      .transp-sep {
+        text-align: center;
+        font-size: 8.5pt;
+        font-weight: bold;
+        border-bottom: 1px solid #bbb;
+        padding: 3px 10px;
+        background: #fafafa;
+        letter-spacing: 1px;
+      }
+      .transp-ass-label {
+        text-align: center;
+        font-size: 8pt;
+        color: #555;
+        padding: 2px 10px 0;
+        font-style: italic;
+      }
+      .transp-ass-space {
+        height: 28px;
+        border-bottom: 1px solid #222;
+        margin: 0 10px 4px;
+      }
+      .transp-row2 {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 10px;
+        border-bottom: 1px solid #bbb;
+        font-size: 8.5pt;
+        gap: 10px;
+      }
+      .transp-modais {
+        padding: 6px 10px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px;
+        font-size: 8.5pt;
+        font-weight: bold;
+      }
+
       .assinaturas { display:flex; gap:30px; margin-top:8px; }
       .ass { flex:1; }
       .ass p { font-size:8pt; color:#555; margin-bottom:14px; }
@@ -404,16 +469,78 @@
   // ══════════════════════════════════════════════════════════
   // IMPRESSÃO — 3 VIAS
   // ══════════════════════════════════════════════════════════
+  // ── HTML de rodapé por via ──────────────────────────────────
+  const assinaturasVia = {
+    PORTARIA: `
+      <div class="assinaturas">
+        <div class="ass">
+          <p>Responsável pela Portaria:</p>
+          <div class="ass-linha"></div>
+          <small>Nome completo / Assinatura / Data</small>
+        </div>
+      </div>`,
+
+    EXPEDIÇÃO: `
+      <div class="assinaturas">
+        <div class="ass">
+          <p>Responsável pela Expedição:</p>
+          <div class="ass-linha"></div>
+          <small>Nome completo / Assinatura / Data</small>
+        </div>
+        <div class="ass">
+          <p>Motorista — Ciente e Recebido:</p>
+          <div class="ass-linha"></div>
+          <small>Nome completo / Assinatura / Data</small>
+        </div>
+      </div>`,
+
+    LOGÍSTICA: `
+      <div class="transp-box">
+        <div class="transp-titulo">RESPONSÁVEL PELO TRANSPORTE<br>RECEBIDO</div>
+        <div class="transp-row">
+          <span>DATA: _____/_____/__________</span>
+          <span>HORA: _______________</span>
+        </div>
+        <div class="transp-sep">TRANSPORTE</div>
+        <div class="transp-ass-label">ASSINATURA</div>
+        <div class="transp-ass-space"></div>
+        <hr style="border:none;border-top:1px solid #333;margin:4px 0">
+        <div class="transp-row2">
+          <div>
+            <span>Data de saída: _____/_____/_____</span><br>
+            <span>Horas: ___________</span>
+          </div>
+          <div>
+            <span>Data de Chegada: _____/_____/_____</span><br>
+            <span>Horas: ___________</span>
+          </div>
+        </div>
+        <div class="transp-modais">
+          <span>FONE: ______________________</span>
+          <span>( &nbsp;) BARCO &nbsp;&nbsp; ( &nbsp;) AÉREO &nbsp;&nbsp; ( &nbsp;) BALSA</span>
+          <span>( &nbsp;) TÁXI &nbsp;&nbsp;&nbsp;&nbsp; ( &nbsp;) LANCHA &nbsp; ( &nbsp;) ÔNIBUS</span>
+        </div>
+      </div>`,
+
+    USINA: `
+      <div class="assinaturas">
+        <div class="ass">
+          <p>Responsável pelo Recebimento (Usina):</p>
+          <div class="ass-linha"></div>
+          <small>Nome completo / Assinatura / Data</small>
+        </div>
+      </div>`
+  };
+
   function imprimir(r) {
     const vias = [
       { lbl:'1ª VIA', dest:'PORTARIA'  },
       { lbl:'2ª VIA', dest:'EXPEDIÇÃO' },
-      { lbl:'3ª VIA', dest:'MOTORISTA' },
+      { lbl:'3ª VIA', dest:'LOGÍSTICA' },
       { lbl:'4ª VIA', dest:'USINA'     }
     ];
 
     const htmlVia = (via) => {
-      // Construir seções de destino
       let nGlobal = 0;
       let totalVolumesGeral = 0;
       const secoes = (r.destinos || []).map((d, di) => {
@@ -421,7 +548,7 @@
         const linhas = (d.notas || []).map(n => {
           nGlobal++;
           const vol = n.volumes || 1;
-          volDest         += vol;
+          volDest           += vol;
           totalVolumesGeral += vol;
           return `<tr>
             <td style="text-align:center;width:24px">${nGlobal}</td>
@@ -450,6 +577,8 @@
           </div>`;
       }).join('');
 
+      const rodapeAssin = assinaturasVia[via.dest] || '';
+
       return `
         <div class="via">
           <div class="via-hdr">
@@ -467,26 +596,13 @@
           <hr class="lh">
 
           <div class="dados-row">
-            <div class="dado">
-              <label>Nº Romaneio</label>
-              <span>${r.numero}</span>
-            </div>
-            <div class="dado">
-              <label>Data do Embarque</label>
-              <span>${r.dataEmbarque}</span>
-            </div>
-            <div class="dado w2">
-              <label>Motorista</label>
-              <span>${r.motorista}</span>
-            </div>
-            <div class="dado">
-              <label>Emitido em</label>
-              <span>${r.dataHoraEnvio}</span>
-            </div>
+            <div class="dado"><label>Nº Romaneio</label><span>${r.numero}</span></div>
+            <div class="dado"><label>Data do Embarque</label><span>${r.dataEmbarque}</span></div>
+            <div class="dado w2"><label>Motorista</label><span>${r.motorista}</span></div>
+            <div class="dado"><label>Emitido em</label><span>${r.dataHoraEnvio}</span></div>
           </div>
 
           <hr class="ls">
-
           ${secoes}
 
           <div class="total-bloco">
@@ -494,19 +610,7 @@
           </div>
 
           <hr class="ls">
-
-          <div class="assinaturas">
-            <div class="ass">
-              <p>Responsável pela Expedição:</p>
-              <div class="ass-linha"></div>
-              <small>Nome completo / Assinatura</small>
-            </div>
-            <div class="ass">
-              <p>Conferência e Recebimento:</p>
-              <div class="ass-linha"></div>
-              <small>Nome / Assinatura / Data</small>
-            </div>
-          </div>
+          ${rodapeAssin}
 
           <div class="via-rodape">
             Romaneio Nº ${r.numero} · ${via.lbl} — ${via.dest} · Oliveira Energia S.A. · Emitido: ${r.dataHoraEnvio}
